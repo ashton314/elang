@@ -4,6 +4,6 @@ pub enum Ast<'a> {
     Int(i64),
     // Variable references (includes references to built-in operators like `+`)
     Var(&'a str),
-    // Function calls are represented as a function name and a list of expressions
-    Call(&'a str, Vec<&'a Ast<'a>>)
+    // Lists, of which function calls are a special case
+    Lst(Vec<&'a Ast<'a>>)
 }
