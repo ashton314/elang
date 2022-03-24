@@ -1,0 +1,77 @@
+#+title: eLang
+
+Easy Language — A simple[fn:1] compiler for a simple lambda calculus.
+
+* Synopsis
+
+#+begin_src lisp
+  42
+  ;=> 42
+#+end_src
+
+Just working on getting integers to compile. :) Will update later with more examples as stuff compiles.
+
+* Description
+
+A simple lambda calculus with ((maybe) eventual) support for the following:
+
+ - [ ] basic math, I/O
+ - [ ] recursive functions
+ - [ ] simple cons-cell lists
+ - [ ] proper tail-call handling
+ - [ ] macros
+ - [ ] ~call/cc~ operator (thus enabling a ton of in-language extensions)
+ - [ ] type inference
+ - [ ] parametric polymorphism and polymorphic functions
+ - [ ] garbage collection (big maybe)
+ - [ ] control-flow analysis to inform compilation (another big maybe)
+
+** Planned Phases
+
+/Note that the project is still in early phases of development. Everything subject to change./
+
+First we process ~elang~ source with some Racket components, then hand off a processed AST to the Rust side for code generation with LLVM.
+
+ - Macro Expansion (Racket) :: We fire up an interpreter which just handles macro expansion. After the interpreter has expanded all macro definitions, the expanded AST is passed onto the next phase.
+ - Type Inference (Racket) :: We check that the program is well-typed. We keep the type information around to guide the codegen phase.
+ - CPS Conversion (Racket) :: This will let us get ~call/cc~, handle tail-calls effectively, (we're not going to trust LLVM to do this for us)
+ - Code Lifting (Racket) :: Gathers function definitions, gathers tail-calls with jumps, and performs other code transformations. Emits a textual representation for the Rust side to slurp up with [[https://github.com/Geal/nom][nom]].
+ - AST Ingestion (Rust) :: Slurp in the AST as emitted by the previous step using nom.
+ - Code Generation (Rust) :: Use the [[https://github.com/TheDan64/inkwell][Inkwell]] library to generate LLVM IR.
+ - Assembly (LLVM) :: Pass the generated IR off to the LLVM for final compilation.
+
+* Development
+
+You will need to install LLVM 12. On macOS, you can do this with:
+
+#+begin_src bash
+  brew install llvm@12
+#+end_src
+
+(Eventually I'd love to get a Nix thingy setup—still learning that though.)
+
+Then you should be able to build the rest:
+
+#+begin_src bash
+  cargo run
+#+end_src
+
+At time of writing, this prompts for an expression which it will attempt to parse. It will then spit out the debug AST.
+
+Once the Racket side becomes more fleshed-out, I'll add instructions on that part too.
+
+* Authors
+
+ - [[https://github.com/ashton314][Ashton Wiersdorf]]
+
+* Naming
+
+#+begin_quote
+We already tried that with lowercase "e"s back in the late 90s. And we all know where that got us…
+
+[[https://homestarrunner.com/sbemails/164-looking-old][Strong Bad, Strong Bad Email #164]]
+#+end_quote
+
+* Footnotes
+
+[fn:1] For sufficiently complex values of "simple".
