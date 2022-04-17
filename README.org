@@ -1,4 +1,5 @@
 #+title: eLang
+#+startup: showall
 
 Easy Language — A simple[fn:1] compiler for a simple lambda calculus.
 
