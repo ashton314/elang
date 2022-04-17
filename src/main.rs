@@ -1,4 +1,5 @@
 use elang::parser;
+use elang::compiler;
 use std::io::{self, Write};
 
 fn main() {
@@ -24,6 +25,8 @@ fn main() {
                     println!("Unparsed: '{}'", rest);
                 }
                 dbg!(tree);
+
+                compiler::comp().unwrap();
                 // println!("{}", serde_json::to_string(&tree).unwrap());
                 // println!("{}", serde_json::to_string_pretty(&tree).unwrap());
             },
