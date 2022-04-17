@@ -32,6 +32,8 @@ impl<'ctx> CodeGen<'ctx> {
         self.builder.position_at_end(basic_block);
         self.builder.build_return(Some(&answer));
 
+        self.module.print_to_stderr();
+
         unsafe { self.execution_engine.get_function("just_a_num").ok() }
     }
 }
