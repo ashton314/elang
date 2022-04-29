@@ -1,13 +1,11 @@
 #lang racket/base
 
 (require racket/match)
+(require "util.rkt")
 
-(provide ->cps)
+(provide alphatize ->cps)
 
 ;;; CPS conversion module
-
-(define (simple-exp? e)
-  (or (number? e) (symbol? e)))
 
 (define (->cps expr [κ 'κ₀])
   (match expr
@@ -45,3 +43,10 @@
            [ctc (->cps tc κ)]
            [cfc (->cps fc κ)])
        (->cps tst `(λ (,k1) (if ,k1 ,ctc ,cfc))))]))
+
+(define (alphatize expr [var-map (make-hash)])
+  (match expr
+    [(? symbol? e)
+     (hash-ref var-map e)]
+    ;; FIXME
+    ))
