@@ -18,8 +18,10 @@ A simple lambda calculus with ((maybe) eventual) support for the following:
 
  - [ ] basic math, I/O
  - [ ] recursive functions
+ - [ ] closures
  - [ ] simple cons-cell lists
- - [ ] proper tail-call handling
+ - [ ] handle tail-calls for same function
+ - [ ] proper tail-call handling of all functions (maybe)
  - [ ] macros
  - [ ] ~call/cc~ operator (thus enabling a ton of in-language extensions)
  - [ ] type inference
@@ -35,13 +37,19 @@ First we process ~elang~ source with some Racket components, then hand off a pro
 
  - Macro Expansion (Racket) :: We fire up an interpreter which just handles macro expansion. After the interpreter has expanded all macro definitions, the expanded AST is passed onto the next phase.
  - Type Inference (Racket) :: We check that the program is well-typed. We keep the type information around to guide the codegen phase.
+ - Alphatization (Racket) :: Uniquely rename all variables; this should make code motion easier.
  - CPS Conversion (Racket) :: This will let us get ~call/cc~, handle tail-calls effectively, (we're not going to trust LLVM to do this for us)
- - Code Lifting (Racket) :: Gathers function definitions, gathers tail-calls with jumps, and performs other code transformations. Emits a textual representation for the Rust side to slurp up with [[https://github.com/Geal/nom][nom]].
- - AST Ingestion (Rust) :: Slurp in the AST as emitted by the previous step using nom.
- - Code Generation (Rust) :: Use the [[https://github.com/TheDan64/inkwell][Inkwell]] library to generate LLVM IR.
- - Assembly (LLVM) :: Pass the generated IR off to the LLVM for final compilation.
+ - Code Lifting (Racket) :: Gathers function definitions, gathers tail-calls with jumps, and performs other code transformations. Must come after the alphatization step. +Emits a textual representation for the Rust side to slurp up with [[https://github.com/Geal/nom][nom]].+
+ - AST Ingestion (Rust) :: +Slurp in the AST as emitted by the previous step using nom.+
+ - Code Generation (Rust) :: +Use the [[https://github.com/TheDan64/inkwell][Inkwell]] library to generate LLVM IR.+
+ - Assembly (LLVM) :: +Pass the generated IR off to the LLVM for final compilation.+
+ - Code generation (Racket) :: Just emit some dumb C code.
 
 * Development
+
+Racket and a C compiler should be the only things you'll need. In an alternate universe, I used Inkwell for the code generation. That might come later. Right now, we're just focusing on getting some interesting aspects of a compiler implemented.
+
+** Inkwell Setup (deprecated)
 
 You will need to install LLVM 12. On macOS, you can do this with:
 
