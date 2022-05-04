@@ -6,17 +6,23 @@ Easy Language — A simple[fn:1] compiler for a simple lambda calculus.
 * Synopsis
 
 #+begin_src lisp
-  42
-  ;=> 42
+  (compile-program '(primcall print-num 42))
 #+end_src
 
-Just working on getting integers to compile. :) Will update later with more examples as stuff compiles.
+#+begin_src bash
+  cc a.c
+  ./a.out
+#+end_src
+
+Just working on getting the basics. :) I'll update this with more examples as stuff compiles.
 
 * Description
 
 A simple lambda calculus with ((maybe) eventual) support for the following:
 
+ - [X] print numbers
  - [ ] basic math, I/O
+ - [ ] let expressions
  - [ ] recursive functions
  - [ ] closures
  - [ ] simple cons-cell lists
@@ -37,7 +43,7 @@ First we process ~elang~ source with some Racket components, then hand off a pro
 
  - Macro Expansion (Racket) :: We fire up an interpreter which just handles macro expansion. After the interpreter has expanded all macro definitions, the expanded AST is passed onto the next phase.
  - Type Inference (Racket) :: We check that the program is well-typed. We keep the type information around to guide the codegen phase.
- - Alphatization (Racket) :: Uniquely rename all variables; this should make code motion easier.
+ - Alphatization (Racket) :: +Uniquely rename all variables; this should make code motion easier.+
  - CPS Conversion (Racket) :: This will let us get ~call/cc~, handle tail-calls effectively, (we're not going to trust LLVM to do this for us)
  - Code Lifting (Racket) :: Gathers function definitions, gathers tail-calls with jumps, and performs other code transformations. Must come after the alphatization step. +Emits a textual representation for the Rust side to slurp up with [[https://github.com/Geal/nom][nom]].+
  - AST Ingestion (Rust) :: +Slurp in the AST as emitted by the previous step using nom.+
