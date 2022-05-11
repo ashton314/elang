@@ -1,8 +1,6 @@
 #lang racket/base
 
 (require racket/match)
-(require racket/set)
-(require racket/list)
 (require "util.rkt")
 
 (provide alphatize ->cps)
@@ -25,7 +23,7 @@
     [(? simple-exp? e) `(,κ ,e)]
 
     [`(primcall ,op ,args ...)
-     (cps-args 'primcall 'primcall op '() args κ)]
+     (cps-args 'primcall 'primcall op '() (reverse args) κ)]
 
     [`(app ,(? simple-exp? f))
      `(fapp ,f ,κ)]
@@ -43,6 +41,14 @@
        `(kapp ,κ (λ (,@params ,k1)
               ,(->cps body k1))))]
 
+    [`(let* ([,(? symbol? varname) ,binding] ...) ,body)
+     ;; let* will get completely compiled out
+     (define (loop vars binds)
+       (if (null? vars)
+           (->cps body κ)
+           (->cps (car binds) `(λ (,(car vars)) ,(loop (cdr vars) (cdr binds))))))
+     (loop varname binding)]
+
     [`(if ,tst ,tc ,fc)
      (let ([k1 (gensym 'κ)]
            [ctc (->cps tc κ)]
@@ -57,22 +63,3 @@
     ;; FIXME
     ))
 (define (alphatize) 'noop)
-
-(define (set-add-all setname lst)
-  (foldl (λ (i acc) (set-add acc i)) setname lst))
-
-;;; free-vars: return variables that appear free in the body of an expression
-(define (free-vars expr [bound-vars (set)])
-  (match expr
-    [(? symbol?) (if (set-member? bound-vars expr) '() (list expr))]
-
-    [(? simple-exp?) '()]
-
-    [`(λ (,binds ...) ,body)
-     (free-vars body (set-add-all bound-vars binds))]
-
-    [`(primcall ,_ ,rst ...)
-     (append-map (λ (i) (free-vars i bound-vars)) rst)]
-
-    [`(,(or 'if 'app) ,rst ...)
-     (append-map (λ (i) (free-vars i bound-vars)) rst)]))
