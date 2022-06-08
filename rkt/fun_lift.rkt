@@ -28,7 +28,7 @@
     [`(,(or 'lambda 'λ) (,params ...) ,body)
      (let-values ([(body-lift body-funcs) (lift-functions body)])
        (let ([f (gensym 'φ)])
-         (values f (cons (cons f `(λ ,params ,body-lift)) body-funcs))))]))
+         (values `(closure ,f ,(free-vars body)) f (cons (cons f `(λ ,params ,body-lift)) body-funcs))))]))
 
 (define (set-add-all setname lst)
   (foldl (λ (i acc) (set-add acc i)) setname lst))
@@ -48,3 +48,4 @@
 
     [`(,(or 'if 'app) ,rst ...)
      (append-map (λ (i) (free-vars i bound-vars)) rst)]))
+
