@@ -16,6 +16,13 @@
     [`(primcall ,(? simple-exp?) ...)
      (values expr fun-acc)]
 
+    [`(primcall ,(? simple-exp? simple) ... ,rst ...)
+     (let-values ([(rst-lift rst-fns)
+                   (for/lists (ae af)
+                              ([r rst])
+                     (lift-functions r))])
+       (values `(primcall ,@simple ,@rst-lift) rst-fns))]
+
     [`(,(? symbol? (or 'fapp 'kapp) app-type) ,fn ,as ...)
      (let-values ([(fn-lft fn-fns) (lift-functions fn)]
                   [(args-lft args-fns)
@@ -29,7 +36,7 @@
      (let-values ([(body-lift body-funcs) (lift-functions body)])
        (let ([f (gensym 'φ)])
          ;; Instances of a literal lambda get turned into a closure construction
-         (values `(closure ,f ,(free-vars body)) f (cons (cons f `(code ,(free-vars body) ,params ,body-lift)) body-funcs))))]))
+         (values `(closure ,f ,(free-vars body)) (cons (cons f `(code ,(free-vars body) ,params ,body-lift)) body-funcs))))]))
 
 (define (set-add-all setname lst)
   (foldl (λ (i acc) (set-add acc i)) setname lst))
