@@ -28,7 +28,8 @@
     [`(,(or 'lambda 'λ) (,params ...) ,body)
      (let-values ([(body-lift body-funcs) (lift-functions body)])
        (let ([f (gensym 'φ)])
-         (values `(closure ,f ,(free-vars body)) f (cons (cons f `(λ ,params ,body-lift)) body-funcs))))]))
+         ;; Instances of a literal lambda get turned into a closure construction
+         (values `(closure ,f ,(free-vars body)) f (cons (cons f `(code ,(free-vars body) ,params ,body-lift)) body-funcs))))]))
 
 (define (set-add-all setname lst)
   (foldl (λ (i acc) (set-add acc i)) setname lst))
