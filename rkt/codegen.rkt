@@ -22,7 +22,8 @@
   (format "~a = ~a;" val ret-var))
 
 (define (emit-headers emit)
-  (emit "#include <stdio.h>"))
+  (emit "#include <stdio.h>")
+  (emit "#include \"elang_core.h\""))
 
 (define (emit-main emit body)
   (emit "int main(int argc, char* argv[]) {")

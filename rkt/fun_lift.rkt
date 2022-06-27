@@ -5,6 +5,9 @@
 (require racket/list)
 (require "util.rkt")
 
+(module+ test
+  (require rackunit))
+
 (provide lift-functions)
 
 ;; lift-functions :: expr, (λ₁, λ₂, ...) -> expr × ((atom, λ₁), (atom, λ₂), ...)
@@ -34,9 +37,11 @@
 
     [`(,(or 'lambda 'λ) (,params ...) ,body)
      (let-values ([(body-lift body-funcs) (lift-functions body)])
-       (let ([f (gensym 'φ)])
+       (let ([f (gensym 'fn)]
+             [frees (free-vars body (list->set params))])
          ;; Instances of a literal lambda get turned into a closure construction
-         (values `(closure ,f ,(free-vars body)) (cons (cons f `(code ,(free-vars body) ,params ,body-lift)) body-funcs))))]))
+         ;; TODO: I will want to replace the free-vars with indexes into the arg list of the closure struct
+         (values `(closure ,f ,frees) (cons (cons f `(code ,frees ,params ,body-lift)) body-funcs))))]))
 
 (define (set-add-all setname lst)
   (foldl (λ (i acc) (set-add acc i)) setname lst))
@@ -56,4 +61,17 @@
 
     [`(,(or 'if 'app) ,rst ...)
      (append-map (λ (i) (free-vars i bound-vars)) rst)]))
+
+[module+ test
+  (test-case "free variable analysis"
+    (check-equal? '() (free-vars '(λ (x) (primcall + x 1))))
+    (check-equal? '(y) (free-vars '(λ (x) (primcall + x y)))))
+
+  (test-case "basic funciton lifting"
+    (let-values ([(nexp _) (lift-functions '(λ (x) (primcall + x 1)))])
+      (check-match nexp (list 'closure (? symbol?) '())))
+
+    (let-values ([(nexp fns) (lift-functions '(fapp (λ (x) (primcall + x 1)) 42))])
+      (check-match nexp (list 'fapp (list 'closure (? symbol?) '()) 42))
+      (check-match fns (list (cons (? symbol?) '(code () (x) (primcall + x 1)))))))]
 
