@@ -62,7 +62,7 @@
     [`(,(or 'if 'app) ,rst ...)
      (append-map (λ (i) (free-vars i bound-vars)) rst)]))
 
-[module+ test
+(module+ test
   (test-case "free variable analysis"
     (check-equal? '() (free-vars '(λ (x) (primcall + x 1))))
     (check-equal? '(y) (free-vars '(λ (x) (primcall + x y)))))
@@ -73,5 +73,6 @@
 
     (let-values ([(nexp fns) (lift-functions '(fapp (λ (x) (primcall + x 1)) 42))])
       (check-match nexp (list 'fapp (list 'closure (? symbol?) '()) 42))
-      (check-match fns (list (cons (? symbol?) '(code () (x) (primcall + x 1)))))))]
+      ;; not sure about that empty list on the end there...
+      (check-match fns (list (list (cons (? symbol?) '(code () (x) (primcall + x 1)))) '())))))
 
