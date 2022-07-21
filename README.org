@@ -75,6 +75,24 @@ At time of writing, this prompts for an expression which it will attempt to pars
 
 Once the Racket side becomes more fleshed-out, I'll add instructions on that part too.
 
+* Sections
+
+** CPS Conversion
+
+This phase takes a program written in direct style and converts it into continuation-passing style.
+
+A *lot* of auxiliary functions get created as part of this phase.
+
+The primary rule is that all arguments to primitive operations are either immediate values or variables.
+
+** Function lifting
+
+This phase de-nests function definitions, so there's a flat list of functions and the original program where lambda blocks have been replaced by closure creations.
+
+The closures are implemented as a struct in C.
+
+We pass the function lifter a list of global symbols so that e.g. closures don't have to capture the global κ₀ continuation.
+
 * Authors
 
  - [[https://github.com/ashton314][Ashton Wiersdorf]]

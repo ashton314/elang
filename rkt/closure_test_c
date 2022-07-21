@@ -1,0 +1,17 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include "elang_core.h"
+
+int add_42(void* args) {
+  int *the_args = (int *)args;
+  return the_args[0] + 42;
+}
+
+int main() {
+  struct closure *c1 = malloc(sizeof(struct closure));
+  int real_args[1];
+  real_args[0] = 22;
+  void *args = &real_args;
+  printf("result: %d\n", add_42(args));
+  return 0;
+}

@@ -12,9 +12,10 @@
 (define output-file (make-parameter "a.c"))
 
 (define (compile-program prog)
-  (let*-values ([(cpsd) (->cps prog)]
-                [(progn funcs) (lift-functions cpsd)])
+  (let*-values ([(cpsd) (->cps prog '__os_return)]
+                [(progn funcs) (lift-functions cpsd '(__os_return))])
     (pretty-print cpsd)
     (pretty-print progn)
     (pretty-print funcs)
+    #;
     (emit-program (output-file) cpsd)))

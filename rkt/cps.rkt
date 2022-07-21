@@ -16,9 +16,9 @@
           (->cps (car todo)
                  (let ([k-fresh (gensym 'κ)])
                    `(λ (,k-fresh)
-                      ,(->cps `(,source-form-name ,form-var ,@cpsd ,k-fresh ,@(cdr todo)))))))))
+                      ,(->cps `(,source-form-name ,form-var ,@cpsd ,k-fresh ,@(cdr todo)) κ)))))))
 
-(define (->cps expr [κ 'κ₀])
+(define (->cps expr κ)
   (match expr
     [(? simple-exp? e) `(,κ ,e)]
 
@@ -34,7 +34,7 @@
 
     [`(app ,f ,as ...)
      (->cps f (let ([k-fresh (gensym 'κ)])
-                `(λ (,k-fresh) ,(->cps `(app ,k-fresh ,@as)))))]
+                `(λ (,k-fresh) ,(->cps `(app ,k-fresh ,@as) κ))))]
 
     [`(,(or 'lambda 'λ) (,params ...) ,body)
      (let ([k1 (gensym 'κ)])

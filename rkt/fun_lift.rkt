@@ -12,7 +12,7 @@
 (provide lift-functions)
 
 ;; lift-functions :: expr, (λ₁, λ₂, ...) -> expr × ((atom, λ₁), (atom, λ₂), ...)
-(define (lift-functions expr [fun-acc '()])
+(define (lift-functions expr [global-syms '()] [fun-acc '()])
   (match expr
     [(? simple-exp?)
      (values expr fun-acc)]
@@ -24,22 +24,22 @@
      (let-values ([(rst-lift rst-fns)
                    (for/lists (ae af)
                               ([r rst])
-                     (lift-functions r))])
+                     (lift-functions r global-syms))])
        (values `(primcall ,@simple ,@rst-lift) (apply append rst-fns)))]
 
     [`(,(? symbol? (or 'fapp 'kapp) app-type) ,fn ,as ...)
-     (let-values ([(fn-lft fn-fns) (lift-functions fn)]
+     (let-values ([(fn-lft fn-fns) (lift-functions fn global-syms)]
                   [(args-lft args-fns)
                    (for/lists (ae af)
                               ([a as])
-                     (lift-functions a))])
+                     (lift-functions a global-syms))])
        (values `(,app-type ,fn-lft ,@args-lft)
                (cons (apply append fn-fns) (apply append args-fns))))]
 
     [`(,(or 'lambda 'λ) (,params ...) ,body)
-     (let-values ([(body-lift body-funcs) (lift-functions body)])
+     (let-values ([(body-lift body-funcs) (lift-functions body global-syms)])
        (let ([f (gensym 'fn)]
-             [frees (free-vars body (list->set params))])
+             [frees (free-vars body (set-union (list->set global-syms) (list->set params)))])
          ;; Instances of a literal lambda get turned into a closure construction
          ;; TODO: I will want to replace the free-vars with indexes into the arg list of the closure struct
          (values `(closure ,f ,frees) (cons (cons f `(code ,frees ,params ,body-lift)) body-funcs))))]))

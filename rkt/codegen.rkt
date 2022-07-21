@@ -16,14 +16,31 @@
      (emit (format "printf(\"%d\", ~a);" e))]
 
     [`(primcall print-str ,(? simple-exp? e) ,_)
-     (emit (format "printf(\"%s\", ~a);" e))]))
+     (emit (format "printf(\"%s\", ~a);" e))]
+
+    [`(primcall + ,a ,b ,cont)
+     (let ([tmp (gensym 'i)])
+       (emit (format "int ~a = ~a + ~a;" tmp a b))
+       (emit-funcall emit cont (list tmp)))]
+    ))
 
 (define (return val ret-var)
   (format "~a = ~a;" val ret-var))
 
+(define (emit-funcall emit fn-ref arglist)
+  (let ([fn-ref-var (gensym 'funref)])
+    ;; FIXME: will I always get a closure?
+    (emit (format "closure* ~a = malloc(sizeof closure);" fn-ref-var))
+    (emit-closure emit fn-ref fn-ref-var)
+    (emit (format "*~a = "))))
+
+(define (emit-closure emit closure-code varname)
+  (emit (format "*~a = closure {~a}")))
+
 (define (emit-headers emit)
   (emit "#include <stdio.h>")
-  (emit "#include \"elang_core.h\""))
+  (emit "#include \"elang_core.h\"")
+  (emit "int __os_return() { exit; }"))
 
 (define (emit-main emit body)
   (emit "int main(int argc, char* argv[]) {")
