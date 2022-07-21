@@ -1,6 +1,7 @@
 #lang racket/base
 
 (require racket/match)
+(require racket/pretty)
 (require "util.rkt")
 
 (provide code->c emit-program)
@@ -27,15 +28,37 @@
 (define (return val ret-var)
   (format "~a = ~a;" val ret-var))
 
+#;
 (define (emit-funcall emit fn-ref arglist)
-  (let ([fn-ref-var (gensym 'funref)])
-    ;; FIXME: will I always get a closure?
-    (emit (format "closure* ~a = malloc(sizeof closure);" fn-ref-var))
+  (let ([fn-ref-var (gensym 'funref)]
+        [arglist-var (gensym 'args)])
+    ;; FIXME: I won't always get a closure; might be a symbol too I think
+    (emit (format "struct closure *~a = malloc(sizeof(struct closure));" fn-ref-var))
+    (emit (format "void *~a[~a];" arglist-var (length arglist)))
+    (for ([i (in-range (length arglist))]
+          [a arglist])
+      (emit (format "~a[~a] = &~a;" arglist-var i a)))
+    (emit (format "~a->closed_args = &~a;" fn-ref-var arglist-var))
     (emit-closure emit fn-ref fn-ref-var)
     (emit (format "*~a = "))))
 
-(define (emit-closure emit closure-code varname)
-  (emit (format "*~a = closure {~a}")))
+(define (emit-funcall emit closure-ref args)
+  (match closure-ref
+    [`(closure ,fnref ,closed-over-vals)
+     (let ([closure-varname (gensym 'closure)])
+       (emit-closure emit fnref closed-over-vals closure-varname))]))
+
+(define (emit-closure emit fnname closed-list result-varname)
+  (emit (format "struct closure *~a = malloc(sizeof(struct closure));" result-varname))
+
+  (let ([closed-list-var (gensym 'closed_vars)])
+    (emit (format "void *~a[~a];" closed-list-var (length closed-list)))
+    (for ([i (in-range (length closed-list))]
+          [a closed-list])
+      (emit (format "~a[~a] = &~a;" closed-list-var i a)))
+    (emit (format "~a->closed_args = &~a;" result-varname closed-list-var))
+    (emit (format "~a->closed_args_c = ~a;" result-varname (length closed-list)))
+    (emit (format "~a->code = void *(closure *) ~a;" result-varname fnname))))
 
 (define (emit-headers emit)
   (emit "#include <stdio.h>")
