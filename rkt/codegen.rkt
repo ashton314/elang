@@ -34,6 +34,7 @@
 
 (define (emit-program filename prog)
   (with-output-to-file filename
+    #:exists 'replace
     (λ ()
       (let ([emit displayln])
         (emit-headers emit)

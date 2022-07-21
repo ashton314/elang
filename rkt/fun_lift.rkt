@@ -3,6 +3,7 @@
 (require racket/match)
 (require racket/set)
 (require racket/list)
+(require racket/pretty)
 (require "util.rkt")
 
 (module+ test
@@ -24,7 +25,7 @@
                    (for/lists (ae af)
                               ([r rst])
                      (lift-functions r))])
-       (values `(primcall ,@simple ,@rst-lift) rst-fns))]
+       (values `(primcall ,@simple ,@rst-lift) (apply append rst-fns)))]
 
     [`(,(? symbol? (or 'fapp 'kapp) app-type) ,fn ,as ...)
      (let-values ([(fn-lft fn-fns) (lift-functions fn)]
@@ -33,7 +34,7 @@
                               ([a as])
                      (lift-functions a))])
        (values `(,app-type ,fn-lft ,@args-lft)
-               (cons fn-fns args-fns)))]
+               (cons (apply append fn-fns) (apply append args-fns))))]
 
     [`(,(or 'lambda 'λ) (,params ...) ,body)
      (let-values ([(body-lift body-funcs) (lift-functions body)])
@@ -73,6 +74,5 @@
 
     (let-values ([(nexp fns) (lift-functions '(fapp (λ (x) (primcall + x 1)) 42))])
       (check-match nexp (list 'fapp (list 'closure (? symbol?) '()) 42))
-      ;; not sure about that empty list on the end there...
-      (check-match fns (list (list (cons (? symbol?) '(code () (x) (primcall + x 1)))) '())))))
+      (check-match fns (list (cons (? symbol?) '(code () (x) (primcall + x 1))))))))
 
