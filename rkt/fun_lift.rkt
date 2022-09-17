@@ -75,4 +75,3 @@
     (let-values ([(nexp fns) (lift-functions '(fapp (λ (x) (primcall + x 1)) 42))])
       (check-match nexp (list 'fapp (list 'closure (? symbol?) '()) 42))
       (check-match fns (list (cons (? symbol?) '(code () (x) (primcall + x 1))))))))
-

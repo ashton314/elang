@@ -28,20 +28,6 @@
 (define (return val ret-var)
   (format "~a = ~a;" val ret-var))
 
-#;
-(define (emit-funcall emit fn-ref arglist)
-  (let ([fn-ref-var (gensym 'funref)]
-        [arglist-var (gensym 'args)])
-    ;; FIXME: I won't always get a closure; might be a symbol too I think
-    (emit (format "struct closure *~a = malloc(sizeof(struct closure));" fn-ref-var))
-    (emit (format "void *~a[~a];" arglist-var (length arglist)))
-    (for ([i (in-range (length arglist))]
-          [a arglist])
-      (emit (format "~a[~a] = &~a;" arglist-var i a)))
-    (emit (format "~a->closed_args = &~a;" fn-ref-var arglist-var))
-    (emit-closure emit fn-ref fn-ref-var)
-    (emit (format "*~a = "))))
-
 (define (emit-funcall emit closure-ref args)
   (match closure-ref
     [`(closure ,fnref ,closed-over-vals)
@@ -52,13 +38,27 @@
   (emit (format "struct closure *~a = malloc(sizeof(struct closure));" result-varname))
 
   (let ([closed-list-var (gensym 'closed_vars)])
-    (emit (format "void *~a[~a];" closed-list-var (length closed-list)))
+    (emit (format "void** ~a = malloc(sizeof(void*) * ~a;"
+                  closed-list-var (length closed-list)))
     (for ([i (in-range (length closed-list))]
           [a closed-list])
-      (emit (format "~a[~a] = &~a;" closed-list-var i a)))
-    (emit (format "~a->closed_args = &~a;" result-varname closed-list-var))
+      ;; help! assuming just integers here!
+      (emit (format "~a[~a] = malloc(sizeof(int)); *~a[~a] = ~a;"
+                    closed-list-var i closed-list-var i a)))
+    (emit (format "~a->closed_args = ~a;" result-varname closed-list-var))
     (emit (format "~a->closed_args_c = ~a;" result-varname (length closed-list)))
-    (emit (format "~a->code = void *(closure *) ~a;" result-varname fnname))))
+    (emit (format "~a->code = &~a;" result-varname fnname))))
+
+(define (emit-closure-use emit closure-varname arg-list result-varname)
+  (let ([arg-list-name (gensym 'arg_list)])
+    (emit (format "void** ~a = malloc(sizeof(void*) * ~a;"
+                  arg-list-name (length arg-list)))
+    (for ([i (in-range (length arg-list))]
+          [a arg-list])
+      (emit (format "~a[~a] = malloc(sizeof(int)); *~a[~a] = ~a;"
+                    arg-list-name i arg-list-name i a)))
+    (emit (format "int ~a = *(int *)~a->code(~a->closed_args, ~a);"
+                  result-varname closure-varname closure-varname arg-list-name))))
 
 (define (emit-headers emit)
   (emit "#include <stdio.h>")
